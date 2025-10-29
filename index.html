@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Liga Universitaria UNSA — Resultados</title>
+  <style>
+    :root{--bg:#f6f7fb;--card:#ffffff;--accent:#0b6cf0;--muted:#6b7280;--success:#16a34a}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:var(--bg);color:#111}
+    header{background:linear-gradient(90deg,#0b6cf0 0%,#2aa6ff 100%);color:#fff;padding:18px 20px}
+    .container{max-width:1100px;margin:20px auto;padding:0 16px}
+    h1{margin:0;font-size:20px}
+    .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 18px rgba(12,34,64,0.06);}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .col-4{grid-column:span 4}
+    .col-8{grid-column:span 8}
+    @media(max-width:800px){.col-4,.col-8{grid-column:span 12}}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    select,input[type=text],input[type=date],input[type=time]{width:100%;padding:8px;border:1px solid #e6edf7;border-radius:8px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:10px;border-bottom:1px solid #eef2f7;text-align:left;font-size:14px}
+    th{background:#fafcff;font-weight:600;color:#334155}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(11,108,240,0.12)}
+    .muted{color:var(--muted);font-size:13px}
+    .empty{padding:30px;text-align:center;color:var(--muted)}
+    .form-row{display:flex;gap:8px}
+    .form-row>div{flex:1}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef6ff;color:#054f9c;font-weight:600;font-size:13px}
+    footer{margin:30px 0 60px;text-align:center;color:var(--muted)}
+    .score{font-weight:700}
+    .small{font-size:13px;color:var(--muted)}
+    .danger{color:#ef4444}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Liga Universitaria UNSA — Resultados de Encuentros</h1>
+      <div class="small">Fútbol • Futsal • Básquet • Vóley — Varones y Damas</div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section class="card" aria-labelledby="filtros">
+      <h2 id="filtros" style="margin-top:0">Filtros y búsqueda</h2>
+      <div class="grid">
+        <div class="col-4">
+          <label for="sport">Deporte</label>
+          <select id="sport">
+            <option value="">Todos</option>
+            <option>Fútbol</option>
+            <option>Futsal</option>
+            <option>Básquet</option>
+            <option>Vóley</option>
+          </select>
+        </div>
+        <div class="col-4">
+          <label for="category">Categoría</label>
+          <select id="category">
+            <option value="">Todas</option>
+            <option>Varones</option>
+            <option>Damas</option>
+          </select>
+        </div>
+        <div class="col-4">
+          <label for="date">Fecha</label>
+          <input type="date" id="date" />
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+        <input id="search" type="text" placeholder="Buscar por equipo, sede o palabra..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #e6edf7" />
+        <button class="btn" id="clear">Limpiar</button>
+        <div style="margin-left:auto" class="muted">Partidos totales: <span id="count">0</span></div>
+      </div>
+    </section>
+
+    <section style="height:18px"></section>
+
+    <section class="grid">
+      <div class="col-8">
+        <div class="card" id="resultsCard">
+          <h3 style="margin-top:0">Resultados</h3>
+          <div id="tableWrap"></div>
+        </div>
+      </div>
+
+      <div class="col-4">
+        <div class="card">
+          <h3 style="margin-top:0">Agregar / Editar resultado</h3>
+          <form id="matchForm">
+            <input type="hidden" id="matchId" />
+            <label>Deporte</label>
+            <select id="f_sport" required>
+              <option>Fútbol</option>
+              <option>Futsal</option>
+              <option>Básquet</option>
+              <option>Vóley</option>
+            </select>
+
+            <label style="margin-top:8px">Categoría</label>
+            <select id="f_category">
+              <option>Varones</option>
+              <option>Damas</option>
+            </select>
+
+            <div class="form-row" style="margin-top:8px">
+              <div>
+                <label>Fecha</label>
+                <input type="date" id="f_date" required />
+              </div>
+              <div>
+                <label>Hora</label>
+                <input type="time" id="f_time" />
+              </div>
+            </div>
+
+            <label style="margin-top:8px">Local</label>
+            <input id="f_home" type="text" placeholder="Equipo local" required />
+            <label style="margin-top:8px">Visitante</label>
+            <input id="f_away" type="text" placeholder="Equipo visitante" required />
+
+            <div class="form-row" style="margin-top:8px;align-items:center">
+              <div>
+                <label>Goles / Pts Local</label>
+                <input id="f_home_score" type="text" placeholder="ej: 2" />
+              </div>
+              <div>
+                <label>Goles / Pts Visitante</label>
+                <input id="f_away_score" type="text" placeholder="ej: 1" />
+              </div>
+            </div>
+
+            <label style="margin-top:8px">Sede / Observaciones</label>
+            <input id="f_location" type="text" placeholder="Campo, coliseo, nota..." />
+
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="btn" type="submit">Guardar resultado</button>
+              <button class="btn ghost" id="resetForm" type="button">Nuevo</button>
+            </div>
+            <div class="small" style="margin-top:8px">Los resultados se guardan en el navegador (localStorage). Puedes exportarlos o pedir que los suba a tu servidor.</div>
+          </form>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="card">
+          <h4 style="margin:0 0 8px 0">Acciones</h4>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost" id="exportBtn" title="Exportar JSON">Exportar JSON</button>
+            <button class="btn ghost" id="importBtn">Importar JSON</button>
+            <button class="btn ghost" id="clearAll">Borrar todo</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Página de ejemplo — Liga Universitaria UNSA · diseñado para mostrar y administrar resultados locales.
+    </footer>
+  </main>
+
+  <script>
+    // Datos de ejemplo iniciales
+    const SAMPLE = [
+      {id:1,date:'2025-10-15',time:'16:00',sport:'Fútbol',category:'Varones',home:'UNSA A',away:'San Agustín',home_score:2,away_score:1,location:'Campo 1'},
+      {id:2,date:'2025-10-16',time:'18:00',sport:'Básquet',category:'Damas',home:'UNSA D',away:'FIME',home_score:58,away_score:62,location:'Coliseo Central'},
+      {id:3,date:'2025-10-17',time:'19:30',sport:'Vóley',category:'Varones',home:'UNSA B',away:'Ciencias',home_score:3,away_score:2,location:'Gimnasio B'},
+      {id:4,date:'2025-10-18',time:'15:00',sport:'Futsal',category:'Damas',home:'UNSA Fem',away:'Colegio X',home_score:4,away_score:0,location:'Cancha techada'}
+    ];
+
+    // Keys
+    const STORAGE_KEY = 'unsa_liga_resultados_v1';
+
+    // State
+    let matches = loadMatches();
+
+    // Elements
+    const sportEl = document.getElementById('sport');
+    const categoryEl = document.getElementById('category');
+    const dateEl = document.getElementById('date');
+    const searchEl = document.getElementById('search');
+    const tableWrap = document.getElementById('tableWrap');
+    const countEl = document.getElementById('count');
+    const clearBtn = document.getElementById('clear');
+
+    const form = document.getElementById('matchForm');
+    const idEl = document.getElementById('matchId');
+    const f_sport = document.getElementById('f_sport');
+    const f_category = document.getElementById('f_category');
+    const f_date = document.getElementById('f_date');
+    const f_time = document.getElementById('f_time');
+    const f_home = document.getElementById('f_home');
+    const f_away = document.getElementById('f_away');
+    const f_home_score = document.getElementById('f_home_score');
+    const f_away_score = document.getElementById('f_away_score');
+    const f_location = document.getElementById('f_location');
+    const resetFormBtn = document.getElementById('resetForm');
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const clearAllBtn = document.getElementById('clearAll');
+
+    // Events
+    [sportEl,categoryEl,dateEl,searchEl].forEach(el=>el.addEventListener('input',render));
+    clearBtn.addEventListener('click',()=>{sportEl.value='';categoryEl.value='';dateEl.value='';searchEl.value='';render();});
+
+    form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const id = idEl.value ? Number(idEl.value) : Date.now();
+      const entry = {
+        id,
+        date:f_date.value,
+        time:f_time.value||'',
+        sport:f_sport.value,
+        category:f_category.value,
+        home:f_home.value.trim(),
+        away:f_away.value.trim(),
+        home_score: f_home_score.value !== '' ? parseScore(f_home_score.value) : null,
+        away_score: f_away_score.value !== '' ? parseScore(f_away_score.value) : null,
+        location: f_location.value.trim()
+      };
+      // If exists, replace
+      const idx = matches.findIndex(m=>m.id===id);
+      if(idx>-1) matches[idx]=entry; else matches.unshift(entry);
+      saveMatches();
+      resetForm();
+      render();
+    });
+
+    resetFormBtn.addEventListener('click',resetForm);
+
+    exportBtn.addEventListener('click',()=>{
+      const dataStr = JSON.stringify(matches, null, 2);
+      const blob = new Blob([dataStr],{type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'unsa_liga_resultados.json'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    importBtn.addEventListener('click',()=>{
+      const input = document.createElement('input'); input.type='file'; input.accept='application/json';
+      input.onchange = e=>{
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = ev=>{
+          try{ const imported = JSON.parse(ev.target.result); if(Array.isArray(imported)){ matches = imported; saveMatches(); render(); alert('Importación completada'); } else alert('Archivo no válido'); }
+          catch(err){alert('Error leyendo JSON: '+err)}
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    });
+
+    clearAllBtn.addEventListener('click',()=>{
+      if(confirm('¿Borrar todos los resultados? Esta acción no se puede deshacer.')){ matches = []; saveMatches(); render(); }
+    });
+
+    // Helpers
+    function parseScore(val){
+      const n = Number(val);
+      return Number.isFinite(n) ? n : val;
+    }
+
+    function loadMatches(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw){ return JSON.parse(raw); }
+      }catch(e){ console.error(e); }
+      // si no hay nada en localStorage, retornar copia de SAMPLE
+      return JSON.parse(JSON.stringify(SAMPLE));
+    }
+
+    function saveMatches(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
+    }
+
+    function resetForm(){
+      idEl.value=''; f_sport.value='Fútbol'; f_category.value='Varones'; f_date.value=''; f_time.value=''; f_home.value=''; f_away.value=''; f_home_score.value=''; f_away_score.value=''; f_location.value='';
+    }
+
+    function render(){
+      const sport = sportEl.value;
+      const category = categoryEl.value;
+      const date = dateEl.value;
+      const q = searchEl.value.trim().toLowerCase();
+
+      let filtered = matches.filter(m=>{
+        if(sport && m.sport !== sport) return false;
+        if(category && m.category !== category) return false;
+        if(date && m.date !== date) return false;
+        if(q){
+          const hay = [m.home,m.away,m.location,m.sport,m.category,(m.date||'')].join(' ').toLowerCase();
+          if(!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      countEl.textContent = filtered.length;
+
+      if(filtered.length===0){
+        tableWrap.innerHTML = '<div class="empty">No hay resultados que coincidan con los filtros.</div>';
+        return;
+      }
+
+      // construir tabla
+      const rows = filtered.map(m=>{
+        const score = (m.home_score==null || m.away_score==null) ? '<span class="muted">pendiente</span>' : `<span class="score">${escapeHtml(m.home_score)} - ${escapeHtml(m.away_score)}</span>`;
+        return `
+          <tr data-id="${m.id}">
+            <td>${escapeHtml(m.date)} ${m.time?'<span class="small">'+escapeHtml(m.time)+'</span>':''}</td>
+            <td>${escapeHtml(m.sport)}<br><span class="small">${escapeHtml(m.category)}</span></td>
+            <td>${escapeHtml(m.home)} <strong>vs</strong> ${escapeHtml(m.away)}</td>
+            <td>${score}</td>
+            <td>${escapeHtml(m.location||'')}</td>
+            <td style="width:140px">
+              <button class="btn ghost" data-action="edit">Editar</button>
+              <button class="btn" data-action="delete">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      }).join('\n');
+
+      tableWrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha / Hora</th>
+              <th>Deporte / Cat.</th>
+              <th>Encuentro</th>
+              <th>Resultado</th>
+              <th>Sede / Nota</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      `;
+
+      // attach button events
+      tableWrap.querySelectorAll('button').forEach(btn=>{
+        const tr = btn.closest('tr');
+        const id = Number(tr.getAttribute('data-id'));
+        if(btn.dataset.action==='edit') btn.addEventListener('click',()=>loadIntoForm(id));
+        if(btn.dataset.action==='delete') btn.addEventListener('click',()=>{ if(confirm('Eliminar resultado?')){ matches = matches.filter(m=>m.id!==id); saveMatches(); render(); } });
+      });
+    }
+
+    function loadIntoForm(id){
+      const m = matches.find(x=>x.id===id); if(!m) return;
+      idEl.value = m.id; f_sport.value = m.sport; f_category.value = m.category; f_date.value = m.date; f_time.value = m.time||''; f_home.value = m.home; f_away.value = m.away; f_home_score.value = m.home_score!=null?m.home_score:''; f_away_score.value = m.away_score!=null?m.away_score:''; f_location.value = m.location||'';
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // inicializar
+    render();
+
+  </script>
+</body>
+</html>
